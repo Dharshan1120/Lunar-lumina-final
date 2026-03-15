@@ -106,7 +106,7 @@ function Login() {
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-        )}
+        />
 
         <div>
           <button onClick={handleLogin} style={buttonStyle}>Login</button>
