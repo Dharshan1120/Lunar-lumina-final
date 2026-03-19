@@ -8,8 +8,7 @@ import { shuffleArray, getStaticQuestionId, withShuffledOptions } from "../utils
 import { calculateXpForAttempt } from "../utils/xpUtils";
 import { getActivityDays, computeStreak } from "../utils/streakUtils";
 import StudyPlanWithLinks from "../components/StudyPlanWithLinks";
-
-const API_URL = "https://lunar-lumina-final.onrender.com";
+import { API_URL } from "../services/constants";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 

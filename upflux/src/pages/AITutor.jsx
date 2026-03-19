@@ -4,9 +4,9 @@ import { db } from "../services/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
+import { API_URL } from "../services/constants";
 
 const MAX_HISTORY_MESSAGES = 14;
-const API_BASE = "https://lunar-lumina-final.onrender.com";
 
 // Typing dots animation component
 function TypingDots() {
@@ -82,7 +82,7 @@ function AITutor() {
 
     try {
       const historyForApi = conversation.slice(-Math.floor(MAX_HISTORY_MESSAGES / 2) * 2);
-      const res = await fetch(`${API_BASE}/ai-tutor`, {
+      const res = await fetch(`${API_URL}/ai-tutor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userMessage: trimmed, weakTopics, learningVelocity, riskLevel, conversationHistory: historyForApi }),

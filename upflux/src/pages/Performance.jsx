@@ -9,8 +9,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Cell
 } from "recharts";
-
-const BACKEND_URL = "https://lunar-lumina-final.onrender.com";
+import { API_URL } from "../services/constants";
 
 // Custom Tooltip for Area chart
 const CustomLineTooltip = ({ active, payload, label }) => {
@@ -212,7 +211,7 @@ function Performance() {
 
     setAiError("");
 
-    fetch(`${BACKEND_URL}/suggest-study-plan`, {
+    fetch(`${API_URL}/suggest-study-plan`, {
 
       method: "POST",
 
