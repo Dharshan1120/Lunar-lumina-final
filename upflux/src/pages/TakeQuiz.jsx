@@ -60,6 +60,7 @@ function TakeQuiz() {
   const [quizDate, setQuizDate] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [difficulty, setDifficulty] = useState("");
+  const [generating, setGenerating] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const hasAnalyzed = useRef(false);
@@ -122,16 +123,31 @@ function TakeQuiz() {
 
   const generateQuiz = async () => {
     if (!uploadedFile || !difficulty) { alert("Upload file and select difficulty"); return; }
+    setGenerating(true);
     const formData = new FormData();
     formData.append("file", uploadedFile);
     formData.append("difficulty", difficulty);
-    const response = await fetch(`${API_URL}/generate-quiz`, { method: "POST", body: formData });
-    const data = await response.json();
-    const limited = Array.isArray(data) ? data.slice(0, 10) : [];
-    setFilteredQuestions(withShuffledOptions(limited));
-    setStartTime(new Date());
-    setQuizDate(new Date());
-    setQuizStarted(true);
+    try {
+      const response = await fetch(`${API_URL}/generate-quiz`, { method: "POST", body: formData });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate quiz");
+      }
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error("No questions generated. Please try a different file or difficulty.");
+      }
+      const limited = data.slice(0, 10);
+      setFilteredQuestions(withShuffledOptions(limited));
+      setStartTime(new Date());
+      setQuizDate(new Date());
+      setQuizStarted(true);
+    } catch (error) {
+      console.error("Generate quiz error:", error);
+      alert("Failed to generate quiz: " + error.message);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handleNext = () => {
@@ -498,19 +514,19 @@ function TakeQuiz() {
           {/* Start button */}
           <button
             onClick={selectedTopic === "Custom" ? generateQuiz : startQuiz}
-            disabled={!selectedTopic || (selectedTopic === "Custom" && (!uploadedFile || !difficulty))}
+            disabled={!selectedTopic || generating || (selectedTopic === "Custom" && (!uploadedFile || !difficulty))}
             style={{
-              width: "100%", padding: "16px", borderRadius: "16px", border: "none", cursor: selectedTopic ? "pointer" : "not-allowed",
+              width: "100%", padding: "16px", borderRadius: "16px", border: "none", cursor: (selectedTopic && !generating) ? "pointer" : "not-allowed",
               background: selectedTopic ? "linear-gradient(135deg,var(--brand-primary),var(--brand-accent))" : "var(--bg-secondary)",
               color: selectedTopic ? "#fff" : "var(--text-muted)",
               fontWeight: 800, fontSize: "16px", letterSpacing: "0.01em",
               boxShadow: selectedTopic ? "var(--shadow-glow)" : "none",
               transition: "all 0.2s",
             }}
-            onMouseEnter={e => { if (selectedTopic) e.currentTarget.style.transform = "translateY(-2px)"; }}
+            onMouseEnter={e => { if (selectedTopic && !generating) e.currentTarget.style.transform = "translateY(-2px)"; }}
             onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
           >
-            {selectedTopic === "Custom" ? "✨ Generate AI Quiz" : selectedTopic ? `🚀 Start ${selectedTopic} Quiz` : "Select a topic to begin"}
+            {generating ? "🤖 Generating Quiz..." : selectedTopic === "Custom" ? "✨ Generate AI Quiz" : selectedTopic ? `🚀 Start ${selectedTopic} Quiz` : "Select a topic to begin"}
           </button>
         </div>
       </div>
@@ -614,7 +630,7 @@ function TakeQuiz() {
               key={c}
               onClick={() => setSelectedConfidence(c)}
               style={{
-                padding: "5px 14px", borderRadius: "999px", border: "none", cursor: "pointer", fontSize: "12px", fontWeight: 600,
+                padding: "5px 14px", borderRadius: "999px", cursor: "pointer", fontSize: "12px", fontWeight: 600,
                 background: selectedConfidence === c ? "var(--brand-light)" : "var(--bg-primary)",
                 color: selectedConfidence === c ? "var(--brand-primary)" : "var(--text-muted)",
                 border: selectedConfidence === c ? "1px solid var(--brand-primary)" : "1px solid var(--border-light)",

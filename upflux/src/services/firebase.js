@@ -6,9 +6,9 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCK93RXiaaynzRrQA1Hu9tzkBttgb1N2J8",
-  authDomain: "upflux-ai.firebaseapp.com",
-  projectId: "upflux-ai",
-  storageBucket: "upflux-ai.firebasestorage.app",
+  authDomain: "learnova-ai.firebaseapp.com",
+  projectId: "learnova-ai",
+  storageBucket: "learnova-ai.firebasestorage.app",
   messagingSenderId: "991438837299",
   appId: "1:991438837299:web:ed000930fcc7cf1a28f546"
 };

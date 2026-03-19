@@ -7,10 +7,9 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login", { replace: true });
-    }
-  }, [user, navigate]);
+    // Remove automatic redirect - let users see the home page
+    // They can choose to login or continue as needed
+  }, []);
 
   const buttonStyle = {
     background: 'var(--brand-primary)',
@@ -31,7 +30,7 @@ function Home() {
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', textAlign: 'center', background: 'var(--bg-app)' }}>
       <div style={{ background: 'var(--bg-glass)', padding: '48px', borderRadius: '32px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-lg)', maxWidth: '700px', backdropFilter: 'blur(32px)' }}>
         <h1 style={{ fontSize: '3.5rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '24px', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Upflux
+          Learnova
         </h1>
         <p style={{ fontSize: '18px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '32px' }}>
           "Learners benefit because they no longer wait for failure to understand their progress.

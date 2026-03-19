@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learnova</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+
+    #three-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+    }
+
+    .app-overlay {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .glass-card {
+      background: rgba(10, 10, 14, 0.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .glow-btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glow-btn::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: -2px; right: -2px; bottom: -2px;
+      background: linear-gradient(135deg, #6366f1, #a78bfa, #6366f1);
+      border-radius: inherit;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .glow-btn:hover::before { opacity: 1; }
+    .glow-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(99, 102, 241, 0.35); }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .fade-up-d1 { animation-delay: 0.15s; }
+    .fade-up-d2 { animation-delay: 0.3s; }
+    .fade-up-d3 { animation-delay: 0.45s; }
+    .fade-up-d4 { animation-delay: 0.6s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-pill {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      transition: all 0.3s;
+    }
+    .stat-pill:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .feature-card {
+      background: rgba(10, 10, 14, 0.45);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .feature-card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-link {
+      position: relative;
+      transition: color 0.3s;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 2px;
+      background: #6366f1;
+      transition: width 0.3s;
+    }
+    .nav-link:hover::after { width: 100%; }
+    .nav-link:hover { color: #6366f1; }
+
+    .mode-switcher {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.5);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      letter-spacing: 0.5px;
+    }
+    .mode-btn.active {
+      background: rgba(230,57,70,0.15);
+      color: #e63946;
+      border-color: rgba(230,57,70,0.3);
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(230, 57, 70, 0.3); border-radius: 3px; }
+  </style>
+ </head>
+ <body style="background: #0a0a0e; font-family: 'Syne', sans-serif;">
+  <canvas id="three-canvas"></canvas>
+  <div class="app-overlay" id="appOverlay">
+   <!-- Mode Switcher -->
+   <div class="mode-switcher">
+    <button class="mode-btn active" data-mode="particles">◉ Particles</button>
+    <button class="mode-btn" data-mode="waves">◎ Waves</button>
+    <button class="mode-btn" data-mode="nebula">◌ Nebula</button>
+   </div>
+   <!-- Navigation -->
+   <header class="w-full" style="position: sticky; top: 0; z-index: 50;">
+    <nav class="glass-card" style="border-top: none; border-left: none; border-right: none;">
+     <div style="max-width: 1200px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+       <div style="width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center;">
+        <i data-lucide="brain" style="width: 18px; height: 18px; color: #fff;"></i>
+       </div><span style="font-weight: 700; font-size: 18px; color: #fff; letter-spacing: -0.5px;">Learnova</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 28px;">
+       <a href="#features" class="nav-link" style="font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; font-weight: 500;">Features</a>
+       <a href="#about" class="nav-link" style="font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; font-weight: 500;">About</a>
+      </div>
+     </div>
+    </nav>
+   </header><!-- Hero Section -->
+   <main style="max-width: 1200px; margin: 0 auto; padding: 0 24px;">
+    <section style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-top: 12%; padding-bottom: 8%;">
+     <h1 id="mainTitle" class="fade-up fade-up-d1" style="font-size: clamp(36px, 6vw, 72px); font-weight: 800; color: #fff; line-height: 1.05; letter-spacing: -2px; max-width: 800px;">Break Your Learning Plateau,<br><span style="background: linear-gradient(135deg, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Learn Smarter with AI</span></h1>
+     <p id="subtitleText" class="fade-up fade-up-d2" style="margin-top: 20px; font-size: clamp(14px, 1.8vw, 18px); color: rgba(255,255,255,0.45); max-width: 520px; line-height: 1.6; font-weight: 400;">Learnova detects weak areas, predicts learning plateaus, and provides personalized AI insights.</p>
+     <a href="#features" id="ctaButton" class="glow-btn fade-up fade-up-d4" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 40px; padding: 16px 36px; border-radius: 12px; background: #e63946; color: #fff; font-weight: 600; font-size: 15px; text-decoration: none; border: none; cursor: pointer;"> <span id="ctaLabel">Explore Features</span> <i data-lucide="arrow-down-right" style="width: 18px; height: 18px;"></i> </a>
+    </section><!-- Stats Row -->
+    <section style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; padding-bottom: 60px;">
+     <div class="stat-pill" style="padding: 12px 24px; border-radius: 40px; display: flex; align-items: center; gap: 10px;">
+      <span style="color: #e63946; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700;" id="fpsCounter">60</span> <span style="color: rgba(255,255,255,0.4); font-size: 12px;">FPS</span>
+     </div>
+     <div class="stat-pill" style="padding: 12px 24px; border-radius: 40px; display: flex; align-items: center; gap: 10px;">
+      <span style="color: #e63946; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700;" id="particleCount">5K</span> <span style="color: rgba(255,255,255,0.4); font-size: 12px;">POINTS</span>
+     </div>
+     <div class="stat-pill" style="padding: 12px 24px; border-radius: 40px; display: flex; align-items: center; gap: 10px;">
+      <span style="color: #e63946; font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700;">∞</span> <span style="color: rgba(255,255,255,0.4); font-size: 12px;">UNIQUE</span>
+     </div>
+    </section><!-- Features Section -->
+    <section id="features" style="padding-bottom: 80px;">
+     <div style="text-align: center; margin-bottom: 48px;">
+      <h2 style="font-size: clamp(24px, 4vw, 40px); font-weight: 700; color: #fff; letter-spacing: -1px;">AI-Powered Learning Features</h2>
+     </div>
+     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <div class="feature-card" style="padding: 32px; border-radius: 16px;">
+       <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        <i data-lucide="trending-up" style="width: 22px; height: 22px; color: #6366f1;"></i>
+       </div>
+       <h3 style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Plateau Detection</h3>
+       <p style="font-size: 14px; color: rgba(255,255,255,0.4); line-height: 1.6;">Identify learning stagnation patterns early and prevent progress plateaus.</p>
+      </div>
+      <div class="feature-card" style="padding: 32px; border-radius: 16px;">
+       <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        <i data-lucide="lightbulb" style="width: 22px; height: 22px; color: #6366f1;"></i>
+       </div>
+       <h3 style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">AI Insights</h3>
+       <p style="font-size: 14px; color: rgba(255,255,255,0.4); line-height: 1.6;">Receive personalized AI-driven recommendations to optimize your learning journey.</p>
+      </div>
+      <div class="feature-card" style="padding: 32px; border-radius: 16px;">
+       <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        <i data-lucide="zap" style="width: 22px; height: 22px; color: #6366f1;"></i>
+       </div>
+       <h3 style="font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;">Smart Planning</h3>
+       <p style="font-size: 14px; color: rgba(255,255,255,0.4); line-height: 1.6;">Adaptive study plans that evolve with your progress and learning style.</p>
+      </div>
+     </div>
+    </section>
+   </main><!-- Footer -->
+   <footer style="border-top: 1px solid rgba(255,255,255,0.04); padding: 24px;">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+     <span style="font-family: 'Space Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.2);">LEARNOVA © 2025</span> <span style="font-family: 'Space Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.2);">AI LEARNING PLATFORM</span>
+    </div>
+   </footer>
+  </div>
+  <script>
+    // ── Three.js Scene ──
+    let scene, camera, renderer, currentMode = 'particles';
+    let particles, waveMesh, nebulaGroup;
+    let mouseX = 0, mouseY = 0;
+    let frameCount = 0, lastFpsTime = Date.now();
+
+    function initThree() {
+      const canvas = document.getElementById('three-canvas');
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+
+      createParticles();
+      createWaves();
+      createNebula();
+
+      showMode('particles');
+
+      window.addEventListener('resize', onResize);
+      document.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+        mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+      });
+
+      animate();
+    }
+
+    function createParticles() {
+      const count = 5000;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+
+      for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const r = 2.5 + Math.random() * 2;
+        pos[i3] = r * Math.sin(phi) * Math.cos(theta);
+        pos[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        pos[i3 + 2] = r * Math.cos(phi);
+
+        // Indigo-purple palette
+        const t = Math.random();
+        colors[i3] = 0.4 + t * 0.35;      // R
+        colors[i3 + 1] = 0.4 + t * 0.25;  // G
+        colors[i3 + 2] = 0.95 + t * 0.05; // B
+        sizes[i] = Math.random() * 3 + 1;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.035,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+
+      particles = new THREE.Points(geo, mat);
+      scene.add(particles);
+    }
+
+    function createWaves() {
+      const geo = new THREE.PlaneGeometry(12, 12, 128, 128);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x6366f1,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.3,
+      });
+      waveMesh = new THREE.Mesh(geo, mat);
+      waveMesh.rotation.x = -Math.PI / 2.5;
+      waveMesh.position.y = -1;
+      waveMesh.visible = false;
+      scene.add(waveMesh);
+    }
+
+    function createNebula() {
+      nebulaGroup = new THREE.Group();
+      const count = 80;
+      for (let i = 0; i < count; i++) {
+        const geo = new THREE.SphereGeometry(0.15 + Math.random() * 0.6, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({
+          color: new THREE.Color().setHSL(0.68 + Math.random() * 0.12, 0.8, 0.45 + Math.random() * 0.2),
+          transparent: true,
+          opacity: 0.08 + Math.random() * 0.12,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 6,
+          (Math.random() - 0.5) * 4
+        );
+        mesh.userData.speed = 0.2 + Math.random() * 0.5;
+        mesh.userData.offset = Math.random() * Math.PI * 2;
+        nebulaGroup.add(mesh);
+      }
+      nebulaGroup.visible = false;
+      scene.add(nebulaGroup);
+    }
+
+    function showMode(mode) {
+      currentMode = mode;
+      particles.visible = mode === 'particles';
+      waveMesh.visible = mode === 'waves';
+      nebulaGroup.visible = mode === 'nebula';
+
+      const labels = { particles: '5K', waves: '16K', nebula: '80' };
+      document.getElementById('particleCount').textContent = labels[mode];
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = performance.now() * 0.001;
+
+      // Smooth camera follow
+      camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.03;
+      camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.03;
+      camera.lookAt(0, 0, 0);
+
+      if (particles.visible) {
+        particles.rotation.y = t * 0.08;
+        particles.rotation.x = Math.sin(t * 0.05) * 0.15;
+        const pos = particles.geometry.attributes.position.array;
+        for (let i = 0; i < pos.length; i += 3) {
+          pos[i + 1] += Math.sin(t * 0.8 + pos[i] * 0.5) * 0.001;
+        }
+        particles.geometry.attributes.position.needsUpdate = true;
+      }
+
+      if (waveMesh.visible) {
+        const pos = waveMesh.geometry.attributes.position.array;
+        for (let i = 0; i < pos.length; i += 3) {
+          const x = pos[i], z = pos[i + 2] || 0;
+          pos[i + 2] = Math.sin(x * 0.6 + t * 1.2) * Math.cos(z * 0.4 + t * 0.8) * 0.8;
+        }
+        waveMesh.geometry.attributes.position.needsUpdate = true;
+        waveMesh.rotation.z = t * 0.02;
+      }
+
+      if (nebulaGroup.visible) {
+        nebulaGroup.children.forEach((m) => {
+          m.position.x += Math.sin(t * m.userData.speed + m.userData.offset) * 0.003;
+          m.position.y += Math.cos(t * m.userData.speed * 0.7 + m.userData.offset) * 0.002;
+          const s = 1 + Math.sin(t * m.userData.speed + m.userData.offset) * 0.15;
+          m.scale.set(s, s, s);
+        });
+        nebulaGroup.rotation.y = t * 0.03;
+      }
+
+      renderer.render(scene, camera);
+
+      // FPS counter
+      frameCount++;
+      if (Date.now() - lastFpsTime >= 1000) {
+        document.getElementById('fpsCounter').textContent = frameCount;
+        frameCount = 0;
+        lastFpsTime = Date.now();
+      }
+    }
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // ── Mode Switching ──
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => {
+          b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        showMode(btn.dataset.mode);
+      });
+    });
+
+    // ── Init ──
+    initThree();
+    lucide.createIcons();
+  </script>
+ </body>
+</html>

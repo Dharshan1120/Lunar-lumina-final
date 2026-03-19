@@ -69,7 +69,7 @@ function Login() {
     // Initialize Google Auth only once when standard views are shown
     if (!isUsernameStep && window.google && !googleInitializedRef.current) {
       window.google.accounts.id.initialize({
-        client_id: "482704760925-2ip464ckt2muhbi6kb0v9mvcf9c1t05j.apps.googleusercontent.com",  // Replace with actual Client ID from Google Cloud Console
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "482704760925-2ip464ckt2muhbi6kb0v9mvcf9c1t05j.apps.googleusercontent.com",  // Replace with actual Client ID from Google Cloud Console
         callback: handleGoogleCredential
       });
       googleInitializedRef.current = true;
@@ -283,7 +283,7 @@ function Login() {
             <div style={inputContainerStyle}>
               <input
                 type="text"
-                placeholder="e.g. upflux_user"
+                placeholder="e.g. learnova_user"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 style={inputStyle}
@@ -311,12 +311,12 @@ function Login() {
         {isLoginView ? (
           <div>
             <h1 style={{ color: 'var(--text-primary)', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Welcome Back</h1>
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '24px', fontSize: '14px' }}>Log in to continue to Upflux.</p>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '24px', fontSize: '14px' }}>Log in to continue to Learnova.</p>
           </div>
         ) : (
           <div>
             <h1 style={{ color: 'var(--text-primary)', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Create Account</h1>
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '24px', fontSize: '14px' }}>Sign up to get started with Upflux.</p>
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '24px', fontSize: '14px' }}>Sign up to get started with Learnova.</p>
           </div>
         )}
 
@@ -346,7 +346,7 @@ function Login() {
               <div style={inputContainerStyle}>
                 <input
                   type="text"
-                  placeholder="upflux_user"
+                  placeholder="learnova_user"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   style={inputStyle}
@@ -396,6 +396,22 @@ function Login() {
             {isLoading ? "Processing..." : (isLoginView ? "Login" : "Sign Up")}
           </button>
         </form>
+
+        {!isLoginView && (
+          <>
+            <div style={{ position: 'relative', textAlign: 'center', margin: '24px 0' }}>
+              <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'var(--border-light)', zIndex: 0 }}></div>
+              <span style={{ position: 'relative', background: 'var(--bg-glass)', padding: '0 12px', color: 'var(--text-muted)', fontSize: '12px', zIndex: 1 }}>
+                OR CONTINUE WITH
+              </span>
+            </div>
+
+            {/* Google Auth Container for Signup */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+              <div ref={googleButtonRef} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}></div>
+            </div>
+          </>
+        )}
 
         {isLoginView && (
           <>

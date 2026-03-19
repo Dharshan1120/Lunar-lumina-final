@@ -4,17 +4,17 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-Lunar Lumina (aka "Upflux") is an AI-powered quiz platform. Users authenticate, take quizzes (from a static question bank or AI-generated from uploaded syllabi), and view learning analytics on a dashboard. The project has two independent packages: a React frontend and a Node.js/Express backend.
+Lunar Lumina (aka "Learnova") is an AI-powered quiz platform. Users authenticate, take quizzes (from a static question bank or AI-generated from uploaded syllabi), and view learning analytics on a dashboard. The project has two independent packages: a React frontend and a Node.js/Express backend.
 
 ## Repository Structure
 
-- `upflux/` — React frontend (Vite + React 19, the actively developed app)
+- `learnova/` — React frontend (Vite + React 19, the actively developed app)
 - `backend/` — Express API server (quiz generation via Groq LLM)
 - `Lunar-Lumina/` — Appears to be a stale/nested copy of the repo; not actively used
 
 ## Commands
 
-### Frontend (`upflux/`)
+### Frontend (`learnova/`)
 
 ```
 npm run dev        # Start Vite dev server
@@ -33,7 +33,7 @@ Requires a `.env` file in `backend/` with `GROQ_API_KEY`.
 
 ### Install dependencies
 
-Each package manages its own `node_modules`. Run `npm install` separately in `upflux/` and `backend/`.
+Each package manages its own `node_modules`. Run `npm install` separately in `learnova/` and `backend/`.
 
 ## Architecture
 
@@ -72,12 +72,12 @@ After completing a quiz, the user clicks "Save Result" which writes to Firestore
 
 ## ESLint
 
-Flat config in `upflux/eslint.config.js`. Notable rule: `no-unused-vars` ignores variables starting with uppercase or underscore (`varsIgnorePattern: '^[A-Z_]'`).
+Flat config in `learnova/eslint.config.js`. Notable rule: `no-unused-vars` ignores variables starting with uppercase or underscore (`varsIgnorePattern: '^[A-Z_]'`).
 
 ## Environment Variables
 
 - `backend/.env`: `GROQ_API_KEY` — required for AI quiz generation
-- Firebase config is hardcoded in `upflux/src/services/firebase.js` (project: `upflux-ai`)
+- Firebase config is hardcoded in `learnova/src/services/firebase.js` (project: `learnova-ai`)
 
 ## Testing
 

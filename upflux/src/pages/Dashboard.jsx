@@ -906,7 +906,7 @@ function Dashboard() {
           }}>
             <h3 style={{ marginBottom: "16px", fontSize: "16px", color: "#e2e8f0", fontWeight: 700 }}>📈 Accuracy Trend</h3>
             <div style={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                 <AreaChart data={displayAttempts}>
                   <defs>
                     <linearGradient id="colorAccuracy" x1="0" y1="0" x2="0" y2="1">

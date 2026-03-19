@@ -968,40 +968,91 @@ app.post("/send-alert-email", async (req, res) => {
 
     const resend = new Resend(apiKey);
 
-    const fromAddress = "onboarding@resend.dev";
+    const fromAddress = "Learnova <onboarding@resend.dev>"; // OR your verified domain
+
+    // For development/testing: always send to owner's email due to Resend restrictions
+
+    const ownerEmail = "dharshansmd@gmail.com";
+
+    const recipientEmail = ownerEmail; // Override with owner's email for testing
 
 
 
-    const emailBody = [
+    // Create HTML email template
+    const htmlTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${email_title}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+    .content { padding: 40px 30px; }
+    .greeting { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #1a202c; }
+    .message { font-size: 16px; margin-bottom: 30px; color: #4a5568; }
+    .details { background: #f7fafc; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 6px; }
+    .details strong { color: #2d3748; }
+    .footer { background: #f8fafc; padding: 20px 30px; text-align: center; color: #718096; font-size: 14px; }
+    .emoji { font-size: 24px; margin-bottom: 10px; display: block; }
+    .original-recipient { font-size: 12px; color: #a0aec0; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="emoji">🚀</div>
+      <h1>Learnova Insight</h1>
+    </div>
+    <div class="content">
+      <div class="greeting">Hi ${user_name || "Learner"},</div>
+      <div class="message">${email_message.replace(/\n/g, '<br>')}</div>
+      ${dynamic_content ? `
+      <div class="details">
+        <strong>Details:</strong><br>
+        ${dynamic_content.replace(/\n/g, '<br>')}
+      </div>
+      ` : ''}
+      <div class="original-recipient">
+        Original recipient: ${to}
+      </div>
+    </div>
+    <div class="footer">
+      <p>Keep learning with Learnova! 📚✨</p>
+      <p>This is an automated learning insight from your progress tracking.</p>
+    </div>
+  </div>
+</body>
+</html>`;
 
-      `Hi ${user_name || "Learner"},`,
-
-      "",
-
-      email_message,
-
-      "",
-
-      dynamic_content ? `Details:\n${dynamic_content}` : "",
-
-    ]
-
-      .filter(Boolean)
-
-      .join("\n");
 
 
+    // Create text fallback
+    const textFallback = `Your learning report is ready. Open to see insights.
+
+Hi ${user_name || "Learner"},
+
+${email_message}
+
+${dynamic_content ? `Details:\n${dynamic_content}` : ''}
+
+Keep learning with Learnova! 📚✨
+This is an automated learning insight from your progress tracking.
+
+Original recipient: ${to}`;
 
     const { data, error } = await resend.emails.send({
-
       from: fromAddress,
-
-      to: Array.isArray(to) ? to : [to],
-
-      subject: email_title,
-
-      text: emailBody,
-
+      to: recipientEmail,
+      subject: "🚀 Learnova Insight: Your Learning Progress",
+      text: textFallback, // fallback
+      html: htmlTemplate,
+      headers: {
+        "X-Entity-Ref-ID": "learnova-email"
+      }
     });
 
 
@@ -1392,22 +1443,69 @@ app.post("/generate-quiz", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "File is required" });
     }
     const syllabus = await extractSyllabusFromFile(req.file);
-    const prompt = `Generate 10 multiple choice questions based on this syllabus content. Each question should have 4 options (A, B, C, D), one correct answer, and be of ${difficulty} difficulty level. Format as JSON array of objects with keys: question (string), options (array of 4 strings), correctAnswer (string), topic (string, infer from content), difficulty (string, "${difficulty}").
+    const prompt = `Generate exactly 10 multiple choice questions based on this syllabus content. Each question must have exactly 4 options. Return ONLY a valid JSON array of objects. Each object must have these exact keys: "question" (string), "options" (array of exactly 4 strings), "correctAnswer" (string, the correct answer text from options), "topic" (string), "difficulty" (string).
 
-Syllabus: ${syllabus}`;
+Example format:
+[
+  {
+    "question": "What is the capital of France?",
+    "options": ["London", "Paris", "Berlin", "Madrid"],
+    "correctAnswer": "Paris",
+    "topic": "Geography",
+    "difficulty": "${difficulty}"
+  }
+]
+
+Syllabus content: ${syllabus}
+
+Return ONLY the JSON array, no other text.`;
 
     const response = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 2500,
     });
-    const content = response.choices[0].message.content;
-    const questions = JSON.parse(content.match(/\[[\s\S]*\]/)[0]);
-    res.json(questions);
+    const content = response.choices[0].message.content.trim();
+    
+    // Try to extract JSON
+    let jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      // Try to find JSON between ```json and ```
+      const codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch) {
+        jsonMatch = [codeBlockMatch[1]];
+      }
+    }
+    
+    if (!jsonMatch) {
+      throw new Error("AI did not return valid JSON");
+    }
+    
+    const questions = JSON.parse(jsonMatch[0]);
+    
+    // Validate the structure
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error("Invalid questions format");
+    }
+    
+    // Ensure each question has required fields
+    const validatedQuestions = questions.slice(0, 10).map(q => {
+      const options = Array.isArray(q.options) && q.options.length >= 4 ? q.options.slice(0, 4) : ["Option A", "Option B", "Option C", "Option D"];
+      const correctAnswer = options.includes(q.correctAnswer) ? q.correctAnswer : options[0];
+      return {
+        question: q.question || "Question not provided",
+        options,
+        correctAnswer,
+        topic: q.topic || "Custom",
+        difficulty: q.difficulty || difficulty
+      };
+    });
+    
+    res.json(validatedQuestions);
   } catch (error) {
     console.error("Generate Quiz Error:", error);
-    res.status(500).json({ error: "Failed to generate quiz" });
+    res.status(500).json({ error: error.message || "Failed to generate quiz" });
   }
 });
 
