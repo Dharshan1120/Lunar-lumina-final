@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
-
-const API_BASE = "http://localhost:5000";
+import { API_URL } from "../services/constants";
 
 function Challenges() {
   const { user } = useContext(AuthContext);
@@ -27,7 +26,7 @@ function Challenges() {
     }
     const fetchProgress = async () => {
       try {
-        const res = await fetch(`${API_BASE}/challenge-progress/${user.uid}`);
+        const res = await fetch(`${API_URL}/challenge-progress/${user.uid}`);
         const data = await res.json();
         setProgress(data);
       } catch (err) {
@@ -52,7 +51,7 @@ function Challenges() {
     setQuestionStartTime(null);
 
     try {
-      const res = await fetch(`${API_BASE}/generate-challenge`, {
+      const res = await fetch(`${API_URL}/generate-challenge`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ level, userId: user?.uid }),
@@ -79,7 +78,7 @@ function Challenges() {
     const timeTaken = questionStartTime ? (Date.now() - questionStartTime) / 1000 : null;
 
     try {
-      const res = await fetch(`${API_BASE}/evaluate-challenge`, {
+      const res = await fetch(`${API_URL}/evaluate-challenge`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -104,7 +103,7 @@ function Challenges() {
     setError("");
     if (user?.uid) {
       try {
-        const res = await fetch(`${API_BASE}/challenge-progress/${user.uid}`);
+        const res = await fetch(`${API_URL}/challenge-progress/${user.uid}`);
         const data = await res.json();
         setProgress(data);
       } catch (err) {

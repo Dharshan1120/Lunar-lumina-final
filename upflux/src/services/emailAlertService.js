@@ -11,9 +11,9 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { API_URL } from "./constants";
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const API_BASE = "http://localhost:5000";
 
 function toDate(value) {
   if (!value) return null;
@@ -184,7 +184,7 @@ export async function sendEmailAlert(user) {
   };
 
   try {
-    const res = await fetch(`${API_BASE}/send-alert-email`, {
+    const res = await fetch(`${API_URL}/send-alert-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

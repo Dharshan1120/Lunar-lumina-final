@@ -30,7 +30,7 @@ const { Resend } = require("resend");
 
 const Groq = require("groq-sdk");
 
-
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const app = express();
 
@@ -1381,6 +1381,77 @@ Return only valid JSON array. No other text.`;
   } catch (error) {
     console.error("Study Plan Error:", error.message);
     res.status(500).json({ error: "Failed to generate study plan" });
+  }
+});
+
+// Generate Quiz from Syllabus
+app.post("/generate-quiz", upload.single("file"), async (req, res) => {
+  try {
+    const { difficulty } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: "File is required" });
+    }
+    const syllabus = await extractSyllabusFromFile(req.file);
+    const prompt = `Generate 10 multiple choice questions based on this syllabus content. Each question should have 4 options (A, B, C, D), one correct answer, and be of ${difficulty} difficulty level. Format as JSON array of objects with keys: question (string), options (array of 4 strings), correctAnswer (string), topic (string, infer from content), difficulty (string, "${difficulty}").
+
+Syllabus: ${syllabus}`;
+
+    const response = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+      max_tokens: 2000,
+    });
+    const content = response.choices[0].message.content;
+    const questions = JSON.parse(content.match(/\[[\s\S]*\]/)[0]);
+    res.json(questions);
+  } catch (error) {
+    console.error("Generate Quiz Error:", error);
+    res.status(500).json({ error: "Failed to generate quiz" });
+  }
+});
+
+// Analyze Performance
+app.post("/analyze-performance", async (req, res) => {
+  try {
+    const { currentQuiz, previousQuizzes } = req.body;
+    const prompt = `Analyze this student's quiz performance. Current quiz: ${JSON.stringify(currentQuiz)}. Previous quizzes: ${JSON.stringify(previousQuizzes)}. Provide analysis in JSON format with keys: performanceSummary (string), trendAnalysis (string), learningVelocity (string), riskLevel (string), recommendedDifficulty (string), weakTopics (array of strings), strongTopics (array of strings), motivation (string).`;
+
+    const response = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.5,
+      max_tokens: 1000,
+    });
+    const content = response.choices[0].message.content;
+    const analysis = JSON.parse(content.match(/\{[\s\S]*\}/)[0]);
+    res.json(analysis);
+  } catch (error) {
+    console.error("Analyze Performance Error:", error);
+    res.status(500).json({ error: "Failed to analyze performance" });
+  }
+});
+
+// Explain Wrong Answers
+app.post("/explain-wrong", async (req, res) => {
+  try {
+    const { wrongAnswers } = req.body;
+    const explanations = [];
+    for (const wrong of wrongAnswers) {
+      const prompt = `Explain why this answer is wrong and what the correct answer is. Question: ${wrong.question}. User's answer: ${wrong.userAnswer}. Correct answer: ${wrong.correctAnswer}. Provide a short explanation.`;
+      const response = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.5,
+        max_tokens: 300,
+      });
+      const explanation = response.choices[0].message.content.trim();
+      explanations.push(explanation);
+    }
+    res.json({ explanations });
+  } catch (error) {
+    console.error("Explain Wrong Error:", error);
+    res.status(500).json({ error: "Failed to explain wrong answers" });
   }
 });
 

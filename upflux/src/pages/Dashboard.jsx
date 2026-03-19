@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar";
 import SuggestionPopup from "../components/SuggestionPopup";
 import StudyPlanWithLinks from "../components/StudyPlanWithLinks";
 import { getActivityDays, computeStreak, isStreakAboutToExpire } from "../utils/streakUtils";
+import { API_URL } from "../services/constants";
 import { sendEmailAlert } from "../services/emailAlertService";
 import {
   LineChart,
@@ -368,7 +369,7 @@ function Dashboard() {
       }));
 
       try {
-        const res = await fetch("http://localhost:5000/analyze-performance", {
+        const res = await fetch(`${API_URL}/analyze-performance`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
