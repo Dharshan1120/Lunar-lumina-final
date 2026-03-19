@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, BarChart, Bar, Cell
 } from "recharts";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const BACKEND_URL = "https://lunar-lumina-final.onrender.com";
 
 // Custom Tooltip for Area chart
 const CustomLineTooltip = ({ active, payload, label }) => {

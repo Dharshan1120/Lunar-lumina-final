@@ -6,7 +6,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 
 const MAX_HISTORY_MESSAGES = 14;
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE = "https://lunar-lumina-final.onrender.com";
 
 // Typing dots animation component
 function TypingDots() {

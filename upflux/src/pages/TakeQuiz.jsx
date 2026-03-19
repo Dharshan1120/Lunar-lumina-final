@@ -8,6 +8,8 @@ import { shuffleArray, getStaticQuestionId, withShuffledOptions } from "../utils
 import { calculateXpForAttempt } from "../utils/xpUtils";
 import { getActivityDays, computeStreak } from "../utils/streakUtils";
 import StudyPlanWithLinks from "../components/StudyPlanWithLinks";
+
+const API_URL = "https://lunar-lumina-final.onrender.com";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 
@@ -124,7 +126,7 @@ function TakeQuiz() {
     const formData = new FormData();
     formData.append("file", uploadedFile);
     formData.append("difficulty", difficulty);
-    const response = await fetch("http://localhost:5000/generate-quiz", { method: "POST", body: formData });
+    const response = await fetch(`${API_URL}/generate-quiz`, { method: "POST", body: formData });
     const data = await response.json();
     const limited = Array.isArray(data) ? data.slice(0, 10) : [];
     setFilteredQuestions(withShuffledOptions(limited));
@@ -193,7 +195,7 @@ function TakeQuiz() {
       } catch (err) { }
       setAnalyzing(true);
       try {
-        const res = await fetch("http://localhost:5000/analyze-performance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentQuiz: { overallScore: accuracy, difficulty: quizDifficulty, topics: topicStats }, previousQuizzes }) });
+        const res = await fetch(`${API_URL}/analyze-performance`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentQuiz: { overallScore: accuracy, difficulty: quizDifficulty, topics: topicStats }, previousQuizzes }) });
         setAnalysis(await res.json());
       } catch (err) { console.error("Analysis error:", err); }
       setAnalyzing(false);
@@ -208,7 +210,7 @@ function TakeQuiz() {
     const fetchExplanations = async () => {
       setExplainingWrong(true);
       try {
-        const res = await fetch("http://localhost:5000/explain-wrong", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wrongAnswers: wrongOnes }) });
+        const res = await fetch(`${API_URL}/explain-wrong`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wrongAnswers: wrongOnes }) });
         const data = await res.json();
         setExplanations(data.explanations || []);
       } catch (err) { console.error("Explanation error:", err); }
