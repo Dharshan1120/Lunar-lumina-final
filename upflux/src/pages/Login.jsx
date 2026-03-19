@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { signInWithPopup } from "firebase/auth";
 import { auth, db } from "../services/firebase";
 import {
   createUserWithEmailAndPassword,
@@ -41,9 +42,9 @@ function Login() {
       setIsLoading(true);
       setError("");
 
-      const credential = GoogleAuthProvider.credential(response.credential);
-      const userCredential = await signInWithCredential(auth, credential);
-      const user = userCredential.user;
+      const provider = new GoogleAuthProvider();
+const userCredential = await signInWithPopup(auth, provider);
+const user = userCredential.user;
 
       // Check if user exists in db
       const userDocRef = doc(db, "users", user.uid);
