@@ -2,18 +2,23 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCK93RXiaaynzRrQA1Hu9tzkBttgb1N2J8",
-  authDomain: "learnova-ai.firebaseapp.com",
-  projectId: "learnova-ai",
-  storageBucket: "learnova-ai.firebasestorage.app",
-  messagingSenderId: "991438837299",
-  appId: "1:991438837299:web:ed000930fcc7cf1a28f546"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCK93RXiaaynzRrQA1Hu9tzkBttgb1N2J8",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "learnova-ai.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "learnova-ai",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "learnova-ai.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "991438837299",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:991438837299:web:ed000930fcc7cf1a28f546"
 };
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Optional: Connect to emulator in development
+if (import.meta.env.DEV && import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true") {
+  connectFirestoreEmulator(db, "localhost", 8080);
+}
