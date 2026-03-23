@@ -1,10 +1,9 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
-import { db } from "../services/firebase";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
+import { fetchUserQuizAttempts } from "../services/quizAttempts";
 
 const DARK = {
   page: { minHeight: "100vh", background: "var(--bg-app)" },
@@ -32,16 +31,10 @@ function History() {
     const fetchHistory = async () => {
       if (!user?.uid) { setLoading(false); return; }
       try {
-        const q = query(
-          collection(db, "quizAttempts"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "asc")
-        );
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map((doc) => {
-          const d = doc.data();
+        const fetchedAttempts = await fetchUserQuizAttempts(user.uid, "desc");
+        const data = fetchedAttempts.map((d) => {
           return {
-            id: doc.id,
+            id: d.id,
             score: d.score || 0,
             total: d.total || 0,
             accuracy: d.accuracy || 0,
@@ -50,7 +43,7 @@ function History() {
             createdAt: d.createdAt?.toDate?.() || null,
           };
         });
-        setAttempts(data.reverse());
+        setAttempts(data);
       } catch (err) {
         console.error("Error fetching history:", err);
       }

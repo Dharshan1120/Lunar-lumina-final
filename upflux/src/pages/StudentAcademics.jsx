@@ -1,10 +1,9 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { db } from "../services/firebase";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { getStudentProfile, updateStudentProfile } from "../services/academicProfileService";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
+import { fetchUserQuizAttempts } from "../services/quizAttempts";
 
 const SEMESTERS = [
     "Semester 1", "Semester 2", "Semester 3", "Semester 4",
@@ -37,21 +36,15 @@ function StudentAcademics() {
         const fetchData = async () => {
             if (!user) return;
             try {
-                const [profileData, attemptsSnap] = await Promise.all([
+                const [profileData, attemptsData] = await Promise.all([
                     getStudentProfile(user.uid),
-                    getDocs(query(
-                        collection(db, "quizAttempts"),
-                        where("userId", "==", user.uid),
-                        orderBy("createdAt", "desc")
-                    ))
+                    fetchUserQuizAttempts(user.uid, "desc")
                 ]);
 
                 if (profileData) {
                     setProfile(profileData);
                     setEditData(profileData);
                 }
-
-                const attemptsData = attemptsSnap.docs.map(doc => doc.data());
                 setAttempts(attemptsData);
             } catch (error) {
                 console.error("Error fetching academics data:", error);

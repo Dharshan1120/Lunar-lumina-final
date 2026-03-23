@@ -1,6 +1,4 @@
 import { useState, useEffect, useContext } from "react";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
-import { db } from "../services/firebase";
 import { AuthContext } from "../context/AuthContext";
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
@@ -10,6 +8,7 @@ import {
   ResponsiveContainer, BarChart, Bar, Cell
 } from "recharts";
 import { API_URL } from "../services/constants";
+import { fetchUserQuizAttempts } from "../services/quizAttempts";
 
 // Custom Tooltip for Area chart
 const CustomLineTooltip = ({ active, payload, label }) => {
@@ -94,38 +93,25 @@ function Performance() {
 
 
       try {
+        const fetchedAttempts = await fetchUserQuizAttempts(user.uid, "asc");
 
-        const q = query(
-
-          collection(db, "quizAttempts"),
-
-          where("userId", "==", user.uid),
-
-          orderBy("createdAt", "asc")
-
-        );
-
-
-
-        const snapshot = await getDocs(q);
-
-        const data = snapshot.docs.map((doc, index) => ({
+        const data = fetchedAttempts.map((attemptData, index) => ({
 
           attempt: index + 1,
 
-          accuracy: doc.data().accuracy || 0,
+          accuracy: attemptData.accuracy || 0,
 
-          score: doc.data().score || 0,
+          score: attemptData.score || 0,
 
-          total: doc.data().total || 0,
+          total: attemptData.total || 0,
 
-          xp: doc.data().xp || 0,
+          xp: attemptData.xp || 0,
 
-          topics: doc.data().topics || {},
+          topics: attemptData.topics || {},
 
-          date: doc.data().createdAt?.toDate()?.toLocaleDateString() || `Attempt ${index + 1}`,
+          date: attemptData.createdAt?.toDate?.()?.toLocaleDateString() || `Attempt ${index + 1}`,
 
-          ...doc.data()
+          ...attemptData
 
         }));
 
@@ -698,4 +684,3 @@ function Performance() {
 
 
 export default Performance;
-

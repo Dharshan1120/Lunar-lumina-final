@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext, useMemo, useRef } from "react";
-import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ import StudyPlanWithLinks from "../components/StudyPlanWithLinks";
 import { getActivityDays, computeStreak, isStreakAboutToExpire } from "../utils/streakUtils";
 import { API_URL } from "../services/constants";
 import { sendEmailAlert } from "../services/emailAlertService";
+import { fetchUserQuizAttempts } from "../services/quizAttempts";
 import {
   LineChart,
   Line,
@@ -59,20 +60,14 @@ function Dashboard() {
       }
 
       try {
-        const q = query(
-          collection(db, "quizAttempts"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "asc")
-        );
+        const fetchedAttempts = await fetchUserQuizAttempts(user.uid, "asc");
 
-        const snapshot = await getDocs(q);
-
-        const data = snapshot.docs.map((doc, index) => ({
+        const data = fetchedAttempts.map((attemptData, index) => ({
           attempt: index + 1,
-          accuracy: doc.data().accuracy || 0,
-          topics: doc.data().topics || {},
-          xp: doc.data().xp || 0,
-          ...doc.data()
+          accuracy: attemptData.accuracy || 0,
+          topics: attemptData.topics || {},
+          xp: attemptData.xp || 0,
+          ...attemptData,
         }));
 
         setAttempts(data);
